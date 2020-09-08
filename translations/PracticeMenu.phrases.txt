@@ -1,0 +1,12 @@
+"Phrases"
+{
+  "Menu Title"
+  {
+    "en"  "Practice Tools:"
+  }
+  
+  "Nader Menu Item"
+  {
+    "en"  "Nader"
+  }
+}
