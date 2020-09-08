@@ -1,23 +1,7 @@
 #define MESSAGE_PREFIX "[\x05PracticeTools\x01]"
 
-static char _colorNames[][] = {"{NORMAL}", "{DARK_RED}", "{PINK}", "{GREEN}", "{YELLOW}", "{LIGHT_GREEN}", "{LIGHT_RED}", "{GRAY}", "{ORANGE}", "{LIGHT_BLUE}", "{DARK_BLUE}", "{PURPLE}"};
+static char _colorNames[][] = {"{NORMAL}", "{DARK_RED}",    "{PINK}",      "{GREEN}", "{YELLOW}", "{LIGHT_GREEN}", "{LIGHT_RED}", "{GRAY}", "{ORANGE}", "{LIGHT_BLUE}",  "{DARK_BLUE}", "{PURPLE}"};
 static char _colorCodes[][] = {"\x01", "\x02", "\x03", "\x04", "\x05", "\x06", "\x07", "\x08", "\x09", "\x0B", "\x0C", "\x0E"};
-
-ArrayList g_ChatCmds;
-ArrayList g_ChatCmdServerCmds;
-
-public void ChatUtil_OnPluginStart() {
-    g_ChatCmds = new ArrayList(CHATCMD_LENGTH);
-    g_ChatCmdServerCmds = new ArrayList(COMMAND_LENGTH);
-}
-
-public void RegChatCmd(const char[] ChatCmd, const char[] ServerCmd)
-{
-    if (g_ChatCmds.FindString(ChatCmd) == -1) {
-        g_ChatCmds.PushString(ChatCmd);
-        g_ChatCmdServerCmds.PushString(ServerCmd);
-    }
-}
 
 public void OnClientSayCommand_Post(int client, const char[] command, const char[] sArgs) {
     if (!IsPlayer(client))
@@ -34,11 +18,11 @@ public void OnClientSayCommand_Post(int client, const char[] command, const char
     }
     
     if (chatCommand[0]) {
-        char alias[CHATCMD_LENGTH];
+        char alias[ALIAS_LENGTH];
         char cmd[COMMAND_LENGTH];
-        for (int i = 0; i < GetArraySize(g_ChatCmds); i++) {
-            g_ChatCmds.GetString(i, alias, sizeof(alias));
-            g_ChatCmdServerCmds.GetString(i, cmd, sizeof(cmd));
+        for (int i = 0; i < GetArraySize(g_ChatAliases); i++) {
+            g_ChatAliases.GetString(i, alias, sizeof(alias));
+            g_ChatAliasesCommands.GetString(i, cmd, sizeof(cmd));
     
             if (CheckChatAlias(alias, cmd, chatCommand, chatArgs, client)) {
                 break;
@@ -47,7 +31,7 @@ public void OnClientSayCommand_Post(int client, const char[] command, const char
     }
 }
 
-public bool CheckChatAlias(const char[] alias, const char[] command, const char[] chatCommand, const char[] chatArgs, int client) {
+static bool CheckChatAlias(const char[] alias, const char[] command, const char[] chatCommand, const char[] chatArgs, int client) {
     if (StrEqual(chatCommand, alias, false)) {
         ReplySource replySource = GetCmdReplySource();
         SetCmdReplySource(SM_REPLY_TO_CHAT);
@@ -62,15 +46,27 @@ public bool CheckChatAlias(const char[] alias, const char[] command, const char[
     return false;
 }
 
-
-public void MessageToServer(const char[] format) {
+public void Message(int client, const char[] format) {
+    if (client != 0 && (!IsClientConnected(client) || !IsClientInGame(client)))
+        return;
+        
+    SetGlobalTransTarget(client);
+    
     char prefix[64] = MESSAGE_PREFIX;
     
     char finalMsg[1024];
-    Format(finalMsg, sizeof(finalMsg), "%s %s", prefix, format);
-    Colorize(finalMsg, sizeof(finalMsg), false);
-    
-    PrintToServer(finalMsg);
+    if (StrEqual(prefix, ""))
+        Format(finalMsg, sizeof(finalMsg), " %s", format);
+    else
+        Format(finalMsg, sizeof(finalMsg), "%s %s", prefix, format);
+        
+    if (client == 0) {
+        Colorize(finalMsg, sizeof(finalMsg), false);
+        PrintToConsole(client, finalMsg);
+    } else if (IsClientInGame(client)) {
+        Colorize(finalMsg, sizeof(finalMsg));
+        PrintToChat(client, finalMsg);
+    }
 }
 
 public void MessageToAll(const char[] format) {
@@ -83,10 +79,13 @@ public void MessageToAll(const char[] format) {
         SetGlobalTransTarget(i);
         
         char finalMsg[1024];
-        Format(finalMsg, sizeof(finalMsg), "%s %s", prefix, format);
+        if (StrEqual(prefix, ""))
+            Format(finalMsg, sizeof(finalMsg), " %s", format);
+        else
+            Format(finalMsg, sizeof(finalMsg), "%s %s", prefix, format);
 
         if (i != 0) {
-            Colorize(finalMsg, sizeof(finalMsg), false);
+            Colorize(finalMsg, sizeof(finalMsg));
             PrintToChat(i, finalMsg);
         } else {
             Colorize(finalMsg, sizeof(finalMsg), false);
@@ -95,7 +94,7 @@ public void MessageToAll(const char[] format) {
     }
 }
 
-public void Colorize(char[] msg, int size, bool stripColor) {
+stock void Colorize(char[] msg, int size, bool stripColor = false) {
     for (int i = 0; i < sizeof(_colorNames); i++) {
         if (stripColor)
             ReplaceString(msg, size, _colorNames[i], "\x01");
