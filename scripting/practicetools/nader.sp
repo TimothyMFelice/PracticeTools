@@ -211,31 +211,45 @@ public Action Command_ForwardGrenade(int client, int args) {
     return Plugin_Handled;
 }
 
-//public Action Command_ThrowGrenade(int client, int args) {
-//    if (!g_InPracticeMode | !g_InNaderMode) {
-//        return Plugin_Handled;
-//    }
-//    
-//    if (IsGrenade(g_LastGrenadeType[client])) {
-//        Message(client, "Throwing your last nade.");
-//        ThrowGrenade(client, g_LastGrenadeType[client], g_LastGrenadeOrigin[client], g_LastGrenadeVelocity[client]);
-//    } else {
-//        Message(client, "No grenade thrown yet.");
-//    }
-//    
-//    return Plugin_Handled;
-//}
+public Action Command_ThrowGrenade(int client, int args) {
+    if (!g_InPracticeMode | !g_InNaderMode) {
+        return Plugin_Handled;
+    }
+    Message(client, "Command_ThrowGrenade");
+    char finalMsg[1024];
+    Format(finalMsg, sizeof(finalMsg), "LastGrenadeType: %s", g_LastGrenadeType[client]);
+    Message(client, finalMsg);
+    
+    if (IsGrenade(g_LastGrenadeType[client])) {
+        Message(client, "Throwing your last nade.");
+        ThrowGrenade(client, g_LastGrenadeType[client], g_LastGrenadeOrigin[client], g_LastGrenadeVelocity[client]);
+    } else {
+        Message(client, "No grenade thrown yet.");
+    }
+    
+    return Plugin_Handled;
+}
 
 public void OnEntityCreated(int entity, const char[] className) {
     if (!IsValidEntity(entity)) {
         return; 
     }
+    
+    GrenadeType type = GrenadeFromProjectileName(className, entity);
+    if (type == GrenadeType_None) {
+        return;
+    }
  
     SDKHook(entity, SDKHook_SpawnPost, OnEntitySpawned);
+    
+    //if (type != GrenadeType_Molotov && type != GrenadeType_Incendiary && type != GrenadeType_HE) {
+        //SDKHook(entity, SDKHook_StartTouch, OnTouch);
+    //}
 }
 
 public int OnEntitySpawned(int entity) {
     RequestFrame(DelayedOnEntitySpawned, entity);
+    RequestFrame(GetGrenadeParameters, entity);
 }
 
 public int DelayedOnEntitySpawned(int entity) {

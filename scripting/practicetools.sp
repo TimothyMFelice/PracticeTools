@@ -5,10 +5,6 @@
 #define PLUGIN_AUTHOR "S1oth"
 #define PLUGIN_VERSION "0.01"
 
-#define OPTION_NAME_LENGTH 128
-#define CVAR_NAME_LENGTH 64
-#define CVAR_VALUE_LENGTH 128
-
 #include <cstrike>
 #include <sdkhooks>
 #include <sdktools>
@@ -17,13 +13,12 @@
 
 #pragma newdecls required
 
-bool g_InPracticeMode = false;
-bool g_InNaderMode = false;
+#define OPTION_NAME_LENGTH 128
+#define CVAR_NAME_LENGTH 64
+#define CVAR_VALUE_LENGTH 128
 
 #define ALIAS_LENGTH 64
 #define COMMAND_LENGTH 64
-ArrayList g_ChatAliases;
-ArrayList g_ChatAliasesCommands;
 
 #define CLASS_LENGTH 64
 
@@ -34,6 +29,12 @@ enum ClientColor {
     ClientColor_Blue = 3,
     ClientColor_Orange = 4,
 };
+
+bool g_InPracticeMode = false;
+bool g_InNaderMode = false;
+
+ArrayList g_ChatAliases;
+ArrayList g_ChatAliasesCommands;
 
 int g_ClientColors[MAXPLAYERS + 1][4];
 
@@ -62,7 +63,8 @@ public void OnPluginStart()
     g_InPracticeMode = false;
     g_InNaderMode = false;
     
-    InitNaderSettings();
+    g_ChatAliases = new ArrayList(ALIAS_LENGTH);
+    g_ChatAliasesCommands = new ArrayList(COMMAND_LENGTH);
     
     // Setup Commands
     {
@@ -126,14 +128,14 @@ public void OnPluginStart()
         RegConsoleCmd("sm_ng", Command_ForwardGrenade);
         AddChatAlias(".ng", "sm_ng");
         
-        //RegConsoleCmd("sm_throwgrenade", Command_ThrowGrenade);
-        //AddChatAlias(".throwgrenade", "sm_throwgrenade");
-        //RegConsoleCmd("sm_throw", Command_ThrowGrenade);
-        //AddChatAlias(".throw", "sm_throw");
-        //RegConsoleCmd("sm_rethrow", Command_ThrowGrenade);
-        //AddChatAlias(".rethrow", "sm_rethrow");
-        //RegConsoleCmd("sm_rt", Command_ThrowGrenade);
-        //AddChatAlias(".rt", "sm_rt");
+        RegConsoleCmd("sm_throwgrenade", Command_ThrowGrenade);
+        AddChatAlias(".throwgrenade", "sm_throwgrenade");
+        RegConsoleCmd("sm_throw", Command_ThrowGrenade);
+        AddChatAlias(".throw", "sm_throw");
+        RegConsoleCmd("sm_rethrow", Command_ThrowGrenade);
+        AddChatAlias(".rethrow", "sm_rethrow");
+        RegConsoleCmd("sm_rt", Command_ThrowGrenade);
+        AddChatAlias(".rt", "sm_rt");
     }
     
     // Cvars
@@ -156,11 +158,10 @@ public void OnPluginStart()
         g_ClientColors[i][3] = 255;
     }
     
-    g_ChatAliases = new ArrayList(ALIAS_LENGTH);
-    g_ChatAliasesCommands = new ArrayList(COMMAND_LENGTH);
-    
     HookEvent("weapon_fire", Event_WeaponFired);
     HookEvent("smokegrenade_detonate", Event_SmokeDetonate);
+    
+    InitNaderSettings();
 }
 
 public void OnPluginEnd()
@@ -170,6 +171,7 @@ public void OnPluginEnd()
 
 public void OnClientConnected(int client) {
     g_GrenadeHistoryIndex[client] = -1;
+    g_LastGrenadeType[client] = GrenadeType_None;
     ClearArray(g_GrenadeHistoryPositions[client]);
     ClearArray(g_GrenadeHistoryAngles[client]);
     ClearArray(g_ClientGrenadeThrowTimes[client]);

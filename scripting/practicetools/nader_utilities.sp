@@ -104,6 +104,10 @@ public bool IsGrenade(GrenadeType g) {
 }
 
 public void ThrowGrenade(int client, GrenadeType grenadeType, const float origin[3], const float velocity[3]) {
+    g_LastGrenadeType[client] = grenadeType;
+    g_LastGrenadeOrigin[client] = origin;
+    g_LastGrenadeVelocity[client] = velocity;
+    
     char classname[64];
     GetProjectileName(grenadeType, classname, sizeof(classname));
     
@@ -153,4 +157,45 @@ stock void GetProjectileName(GrenadeType type, char[] buffer, int length) {
         default:
             LogError("Unknown grenade type: %d", type);
     }
+}
+
+public void GetGrenadeParameters(int entity) {
+    //if (HandleNativeRequestedNade(entity)) {
+    //    return;
+    //}
+  
+    RequestFrame(DelayCaptureEntity, entity);
+}
+
+public void DelayCaptureEntity(int entity) {
+    RequestFrame(CaptureEntity, entity);
+}
+
+public void CaptureEntity(int entity) {
+    char className[128];
+    GetEntityClassname(entity, className, sizeof(className));
+    GrenadeType grenadeType = GrenadeFromProjectileName(className, entity);
+
+    int client = Entity_GetOwner(entity);
+    float origin[3];
+    float velocity[3];
+    GetEntPropVector(entity, Prop_Data, "m_vecOrigin", origin);
+    GetEntPropVector(entity, Prop_Data, "m_vecVelocity", velocity);
+
+    OnThrowGrenade(client, entity, grenadeType, origin, velocity);
+}
+
+public void OnThrowGrenade(int client, int entity, GrenadeType grenadeType, const float origin[3], const float velocity[3]) {
+    
+    char finalMsg[1024];
+    Format(finalMsg, sizeof(finalMsg), "LastGrenadeType: %s", grenadeType);
+    Message(client, finalMsg);
+    Format(finalMsg, sizeof(finalMsg), "origin: %.1f", origin);
+    Message(client, finalMsg);
+    Format(finalMsg, sizeof(finalMsg), "velocity: %.1f", velocity);
+    Message(client, finalMsg);
+    
+    g_LastGrenadeType[client] = grenadeType;
+    g_LastGrenadeOrigin[client] = origin;
+    g_LastGrenadeVelocity[client] = velocity;
 }
