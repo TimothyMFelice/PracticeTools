@@ -17,6 +17,9 @@
 bool g_InPracticeMode;
 bool g_InNaderMode;
 
+//bool g_Bots[MAXPLAYERS + 1];
+//ArrayList g_ClientBots[MAXPLAYERS + 1];
+
 #include "practicetools/commands.sp"
 #include "practicetools/chat_utilities.sp"
 #include "practicetools/nader.sp"

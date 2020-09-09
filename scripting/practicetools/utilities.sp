@@ -121,3 +121,21 @@ public void GetProjectileName(GrenadeType type, char[] buffer, int length) {
             LogError("Unknown grenade type: %d", type);
     }
 }
+
+bool IsBot(int client) {
+    //return client > 0 && g_Bots[client] && IsClientInGame(client) && IsFakeClient(client);
+    return !(client > 0);
+}
+
+public int GetBotsOwner(int bot) {
+    //if (!IsBot(bot)) {
+    //    return -1;
+    //}
+    //for (int i = 0; i <= MaxClients; i++) {
+    //    ArrayList list = g_ClientBots[i];
+    //    if (list.FindValue(bot) >= 0) {
+    //        return i;
+    //    }
+    //}
+    return -1;
+}

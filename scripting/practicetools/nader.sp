@@ -39,6 +39,9 @@ GrenadeType g_LastGrenadeType[MAXPLAYERS + 1];
 float g_LastGrenadeOrigin[MAXPLAYERS + 1][3];
 float g_LastGrenadeVelocity[MAXPLAYERS + 1][3];
 
+bool g_ClientNoFlash[MAXPLAYERS + 1];
+float g_LastFlashDetonateTime[MAXPLAYERS + 1];
+
 
 public void Nader_OnPluginStart() {
     g_NaderStartCvars = new ArrayList();
@@ -72,6 +75,8 @@ public void Nader_OnClientConnected(int client) {
     ClearArray(g_GrenadeHistoryPositions[client]);
     ClearArray(g_GrenadeHistoryAngles[client]);
     ClearArray(g_ClientGrenadeThrowTimes[client]);
+    
+    g_ClientNoFlash[client] = false;
 }
 
 public void Nader_OnMapStart() {
@@ -315,15 +320,6 @@ public void CaptureEntity(int entity) {
 }
 
 public void OnThrowGrenade(int client, int entity, GrenadeType grenadeType, const float origin[3], const float velocity[3]) {
-    
-    char finalMsg[1024];
-    Format(finalMsg, sizeof(finalMsg), "LastGrenadeType: %s", grenadeType);
-    Message(client, finalMsg);
-    Format(finalMsg, sizeof(finalMsg), "origin: %.1f", origin);
-    Message(client, finalMsg);
-    Format(finalMsg, sizeof(finalMsg), "velocity: %.1f", velocity);
-    Message(client, finalMsg);
-    
     g_LastGrenadeType[client] = grenadeType;
     g_LastGrenadeOrigin[client] = origin;
     g_LastGrenadeVelocity[client] = velocity;
@@ -496,4 +492,73 @@ public void ThrowGrenade(int client, GrenadeType grenadeType, const float origin
         SetEntProp(entity, Prop_Send, "m_bIsIncGrenade", true, 1);
         SetEntityModel(entity, "models/weapons/w_eq_incendiarygrenade_dropped.mdl");
     }
+}
+
+public void NoFlash(int client, int args) {
+    if (!g_InPracticeMode || !g_InNaderMode) {
+        return;
+    }
+
+    g_ClientNoFlash[client] = !g_ClientNoFlash[client];
+    if (g_ClientNoFlash[client]) {
+        Message(client, "Enabled noflash. Use .noflash again to disable.");
+        RequestFrame(KillFlashEffect, GetClientSerial(client));
+    } else {
+        Message(client, "Disabled noflash.");
+    }
+    return;
+}
+
+public void KillFlashEffect(int serial) {
+    int client = GetClientFromSerial(serial);
+    SetEntDataFloat(client, FindSendPropInfo("CCSPlayer", "m_flFlashMaxAlpha"), 0.5);
+}
+
+public void Nader_PlayerBlind(Event event, const char[] name, bool dontBroadcast) {
+    if (!g_InPracticeMode || !g_InNaderMode) {
+        return;
+    }
+
+    int userid = event.GetInt("userid");
+    int client = GetClientOfUserId(userid);
+    if (IsBot(client)) {
+        int owner = GetBotsOwner(client);
+        if (IsPlayer(owner)) {
+                char finalMsg[1024];
+                Format(finalMsg, sizeof(finalMsg), "---> %.1f second flash for BOT %N", GetFlashDuration(client), client);
+                Message(owner, finalMsg);
+        }
+
+        // Did anyone throw a flash recently? If so, they probably care about this bot being blinded.
+        float now = GetGameTime();
+        for (int i = 1; i <= MaxClients; i++) {
+            if (owner != i && IsPlayer(i) && FloatAbs(now - g_LastFlashDetonateTime[i]) < 0.001) {
+                char finalMsg[1024];
+                Format(finalMsg, sizeof(finalMsg), "---> %.1f second flash for BOT %N", GetFlashDuration(client), client);
+                Message(i, finalMsg);
+            }
+        }
+    }
+    
+    if (g_ClientNoFlash[client]) {
+        RequestFrame(KillFlashEffect, GetClientSerial(client));
+    }
+}
+
+public float GetFlashDuration(int client) {
+    return GetEntDataFloat(client, FindSendPropInfo("CCSPlayer", "m_flFlashDuration"));
+}
+
+public void Nader_FlashDetonate(Event event, const char[] name, bool dontBroadcast) {
+    if (!g_InPracticeMode || !g_InNaderMode) {
+        return;
+    }
+
+    int userid = event.GetInt("userid");
+    int client = GetClientOfUserId(userid);
+    //if (IsPlayer(client) && g_TestingFlash[client]) {
+    //    RequestFrame(GetTestingFlashInfo, GetClientSerial(client));
+    //}
+
+    g_LastFlashDetonateTime[client] = GetGameTime();
 }

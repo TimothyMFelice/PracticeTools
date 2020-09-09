@@ -38,6 +38,13 @@ public void Commands_OnPluginStart()
         RegChatCmd(".rethrowgrenade", "sm_rethrowgrenade");
         RegChatCmd(".rethrow", "sm_rethrowgrenade");
         
+        
+        RegConsoleCmd("sm_noflash", Command_NoFlash);
+        RegChatCmd(".noflash", "sm_noflash");
+    }
+   
+    // Bonus Commands   
+    {
     }
 }
 
@@ -68,5 +75,10 @@ public Action Command_ForwardGrenade(int client, int args) {
 
 public Action Command_ThrowGrenade(int client, int args) {
     ThrowLastGrenade(client, args);
+    return Plugin_Handled;
+}
+
+public Action Command_NoFlash(int client, int args) {
+    NoFlash(client, args);
     return Plugin_Handled;
 }

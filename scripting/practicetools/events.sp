@@ -9,6 +9,8 @@ enum ClientColor {
 public Action Event_OnPluginStart() {
     HookEvent("weapon_fire", Event_WeaponFired);
     HookEvent("smokegrenade_detonate", Event_SmokeDetonate);
+    HookEvent("flashbang_detonate", Event_FlashDetonate);
+    HookEvent("player_blind", Event_PlayerBlind);
 }
 
 public void OnMapStart() {
@@ -27,12 +29,20 @@ public Action Event_SmokeDetonate(Event event, const char[] name, bool dontBroad
     Nader_SmokeDetonate(event, name, dontBroadcast);
 }
 
+public Action Event_FlashDetonate(Event event, const char[] name, bool dontBroadcast) {
+    Nader_FlashDetonate(event, name, dontBroadcast);
+}
+
 public void OnEntityCreated(int entity, const char[] className) {
     if (!IsValidEntity(entity)) {
         return; 
     }
     
     Nader_OnEntityCreated(entity, className);
+}
+
+public Action Event_PlayerBlind(Event event, const char[] name, bool dontBroadcast) {
+    Nader_PlayerBlind(event, name, dontBroadcast);
 }
 
 public void QueryClientColor(QueryCookie cookie, int client, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue) {
