@@ -62,6 +62,28 @@ public bool CheckChatAlias(const char[] alias, const char[] command, const char[
     return false;
 }
 
+public void Message(int client, const char[] format) {
+    if (client != 0 && (!IsClientConnected(client) || !IsClientInGame(client)))
+        return;
+        
+    SetGlobalTransTarget(client);
+    
+    char prefix[64] = MESSAGE_PREFIX;
+    
+    char finalMsg[1024];
+    if (StrEqual(prefix, ""))
+        Format(finalMsg, sizeof(finalMsg), " %s", format);
+    else
+        Format(finalMsg, sizeof(finalMsg), "%s %s", prefix, format);
+        
+    if (client == 0) {
+        Colorize(finalMsg, sizeof(finalMsg), false);
+        PrintToConsole(client, finalMsg);
+    } else if (IsClientInGame(client)) {
+        Colorize(finalMsg, sizeof(finalMsg), false);
+        PrintToChat(client, finalMsg);
+    }
+}
 
 public void MessageToServer(const char[] format) {
     char prefix[64] = MESSAGE_PREFIX;

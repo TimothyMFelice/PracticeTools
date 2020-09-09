@@ -5,8 +5,11 @@
 #define PLUGIN_AUTHOR "S1oth"
 #define PLUGIN_VERSION "0.01"
 
-#include <sourcemod>
+#include <cstrike>
+#include <sdkhooks>
 #include <sdktools>
+#include <smlib>
+#include <sourcemod>
 
 #pragma newdecls required
 
@@ -19,6 +22,7 @@ bool g_InNaderMode;
 #include "practicetools/nader.sp"
 #include "practicetools/utilities.sp"
 #include "practicetools/practicetools_menu.sp"
+#include "practicetools/events.sp"
 
 
 public Plugin myinfo = 
@@ -38,13 +42,20 @@ public void OnPluginStart()
     Commands_OnPluginStart();
     PracticeToolsMenu_OnPluginStart();
     Nader_OnPluginStart();
+    Event_OnPluginStart();
 }
+
+public void OnPluginEnd()
+{
+    ExitPracticeTools();
+}
+
+public void OnMapEnd() {
+    ExitPracticeTools();
+}
+
 
 public void InitGlobalVariables() {
     g_InPracticeMode = false;
     g_InNaderMode = false;
-}
-
-public void OnClientConnected(int client) {
-    MessageToAll("Client Connected");
 }

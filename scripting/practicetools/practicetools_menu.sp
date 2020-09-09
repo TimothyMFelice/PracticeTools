@@ -11,6 +11,17 @@ public void StartPracticeTools(int client) {
         GivePracticeToolsMenu(client);
 }
 
+public void ExitPracticeTools() {
+    if (g_InPracticeMode)
+    {
+        if (g_InNaderMode)
+        {
+            ExitNaderMode();
+            return;
+        }
+    }
+}
+
 public void GivePracticeToolsMenu(int client) {
     Menu practiceToolsMenu = new Menu(PracticeToolsMenuHandler, MENU_ACTIONS_ALL);
     practiceToolsMenu.SetTitle("%T", "Menu Title", LANG_SERVER);
